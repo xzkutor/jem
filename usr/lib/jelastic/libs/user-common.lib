@@ -117,7 +117,7 @@ function getAppUserInfo(){
                 _homedir=$( getent passwd "${_appuser}" | cut -d: -f6 )
             ;;
         esac
-        bashRestricts;
+        #bashRestricts;
 		#check if not empty
 	}
 	# || retern error
