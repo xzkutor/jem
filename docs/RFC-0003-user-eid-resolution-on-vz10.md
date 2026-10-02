@@ -47,27 +47,30 @@ the VZ10 `agent.module`. Private paths containing spaces are supported.
 Bats contracts cover legacy PVA priority, VZ10 metadata lookup, a private path
 containing spaces, rejection of an unsafe EID, malformed metadata, and
 duplicate metadata. Path contracts cover typed root and container paths plus
-empty-path rejection. Runtime acceptance requires a disposable VZ10 container
-whose EID exists only in `.vza/eid.conf`, followed by a real
-`jem user add --eid` call and cleanup.
+empty-path rejection. A callback contract also verifies that successfully
+resolved application ownership produces a zero callback status. Runtime
+acceptance requires a disposable VZ10 container whose EID exists only in
+`.vza/eid.conf`, followed by the production sequence of Docker setup, guest JEM
+installation, `jem user add --eid`, and cleanup.
 
 ## Runtime acceptance
 
-Runtime verification on 2026-10-02 used a disposable VZ10 AlmaLinux 9
-Apache/PHP container. The agent stored its test EID only in
+Runtime verification on 2026-10-02 used disposable VZ10 AlmaLinux 9
+Apache/PHP CT 11996. The agent stored its test EID only in
 `<private>/.vza/eid.conf`; the corresponding PVA configuration was absent.
-With the revised module, `jem user add --eid` resolved that metadata and
-entered the target container workflow instead of returning result `4105`.
+The test reproduced the production order: Docker setup completed, then
+`jem install package --name jem --version 9.0.1` installed the guest runtime,
+and finally the hardnode invoked `jem user add --eid`.
 
-The end-to-end user creation could not complete because the tested application
-image does not contain `/usr/bin/jem`, the JEM libraries, or an installed
-`jelastic-jem` package. The next response was result `4045` with the guest
-diagnostic `jem: command not found`. The packaged `docker-static.gz` contains
-only the expected static `sed` and `file` utilities, so it is not a source for
-the complete guest JEM runtime.
+The first complete attempt exposed a lifecycle defect after successful EID and
+application-owner resolution: the final guard in `preAddCallback` evaluated to
+false when both UID and GID were present, so the callback returned status 1.
+The core aborted the action and the hardnode wrapper returned result `4045`
+with an empty message. The callback now returns zero explicitly after its
+guards have passed.
 
-This is an independent image-packaging prerequisite. Copying the host JEM tree
-into a guest is explicitly outside this RFC because it would bypass package
-ownership and could omit image-specific libraries, configuration, and
-customizations. Final Add acceptance requires an image that provides its
-supported guest JEM runtime.
+With both changes installed, the command returned result 0, reported homedir
+`/var/www` and data owner `700:700`, created the `jelastic` guest account, and
+generated its SSH key. This acceptance exercised the VZ10 metadata fallback
+without a PVA mapping. The disposable container was destroyed after evidence
+collection.

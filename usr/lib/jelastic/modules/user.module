@@ -316,6 +316,7 @@ function preAddCallback(){
 
     isFunction "getAppUserInfo" && { log "Call getAppUserInfo"; "getAppUserInfo" "${_USER_NAME}"; } || {  writeJSONResponseErr "result=>4048" "message=>Cannot get user info!"; die -q; };
     [ -z "$_UID" -o -z "$_GUID" ] && {  writeJSONResponseErr "result=>4026" "message=>Cannot get UID!"; die -q; };
+    return 0
 }
 
 function doAdd() {

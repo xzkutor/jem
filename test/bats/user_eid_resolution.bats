@@ -112,3 +112,20 @@ vzlist() {
     [ "$status" -eq 1 ]
     [ ! -e "${TEST_ROOT}/unexpected" ]
 }
+
+@test "user add pre-callback returns success after resolving application ownership" {
+    log() { :; }
+    isFunction() { declare -F "$1" >/dev/null; }
+    getAppUserInfo() {
+        _UID=700
+        _GUID=700
+        _homedir=/var/www
+    }
+    writeJSONResponseErr() { printf 'unexpected error response\n'; }
+    die() { return 99; }
+
+    run preAddCallback -d
+
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
