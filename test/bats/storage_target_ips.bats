@@ -74,6 +74,42 @@ EOF
     [ "$(cat "$TEST_ROOT/jem.args")" = 'auth add --ctid 999 --type ip --list 192.0.2.10 --path rw:/opt/exported' ]
 }
 
+@test "storage utility setup skips installation when required packages are present" {
+    VEID=999
+    CTID=999
+    OS=almalinux
+    OS_ver=9
+    VZ_VEID_OS=almalinux
+    VZ_VEID_OS_VER=9
+    STORAGE_BACKEND=nfs
+    ACTIONS_LOG="${TEST_ROOT}/actions.log"
+    _last_stdout=''
+    isVERunning() { return 0; }
+    vzexecRun() {
+        case "$*" in
+            *CERTIFIED_VERSION*) _last_stdout=3 ;;
+            *'eval packages-present'*) _last_stdout='' ;;
+            *) _last_stdout='' ;;
+        esac
+        return 0
+    }
+    vzexecGetLastStdOut() { printf '%s' "$_last_stdout"; }
+    VEExecRun() {
+        [[ "$*" != *'install-should-not-run'* ]] || return 99
+        return 0
+    }
+    VEexecGetLastStdOut() { printf '%s' "$_last_stdout"; }
+    VEexecGetLastErrCode() { printf '0'; }
+    VEExecRunInteractive() { return 0; }
+    installPackageCmd() { printf 'install-should-not-run'; }
+    checkPackageCmd() { printf 'packages-present'; }
+    writeJSONResponseErr() { printf '%s\n' "$*"; }
+
+    run dosetupUtils
+
+    [ "$status" -eq 0 ]
+}
+
 @test "NFS autofs maps do not pass uid or gid mount options" {
     ! grep -Fq '$_DEFAULT_NFS_MOUNT_OPTS},uid=${USERID},gid=${GROUPID}' "$BATS_TEST_DIRNAME/../../usr/lib/jelastic/modules/storage.module"
 }
