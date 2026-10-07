@@ -58,3 +58,13 @@ teardown() { rm -rf "$TEST_ROOT"; }
 @test "auth clean defaults to native IP cleanup" {
     grep -Fq '[[ -z "$ATYPE" ]] && ATYPE="ip"' "$BATS_TEST_DIRNAME/../../usr/lib/jelastic/modules/auth.module"
 }
+
+@test "auth existing-export IP lookup accepts optional CIDR without a stray slash escape" {
+    local pattern='((1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])\.){3}(1?[0-9][0-9]?|2[0-4][0-9]|25[0-5])(/[0-9]{2})?'
+
+    run bash -c "printf '%s\\n' '192.0.2.10/24' | grep -oE '$pattern'"
+
+    [ "$status" -eq 0 ]
+    [ "$output" = '192.0.2.10/24' ]
+    ! grep -Fq ')(\\/[0-9]{2})?' "$BATS_TEST_DIRNAME/../../usr/lib/jelastic/modules/auth.module"
+}
