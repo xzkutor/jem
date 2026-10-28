@@ -64,6 +64,16 @@ getPassword 'envId:legacy-payload:modern-payload' >/dev/null
 assertEquals 'environment-id-for-test' "$(<"$TEST_CAPTURE")"
 assertEquals '<12345><-Ho><private>' "$(<"$TEST_VZLIST_CALLS")"
 
+TEST_PRIVATE="$testRoot/private-with-eid-no-newline"
+mkdir -p "$TEST_PRIVATE/.vza"
+printf '%s' 'environment-id-without-newline' > "$TEST_PRIVATE/.vza/eid.conf"
+TEST_UUID='66666666-7777-8888-9999-000000000000'
+> "$TEST_VZLIST_CALLS"
+__CTID=12346
+getPassword 'envId:legacy-payload:modern-payload' >/dev/null
+assertEquals 'environment-id-without-newline' "$(<"$TEST_CAPTURE")"
+assertEquals '<12346><-Ho><private>' "$(<"$TEST_VZLIST_CALLS")"
+
 TEST_PRIVATE="$testRoot/private-without-eid"
 mkdir -p "$TEST_PRIVATE"
 TEST_UUID='aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
